@@ -13,10 +13,16 @@ High-quality 3D assets are essential for various applications in computer graphi
 <!-- Updates -->
 ## ⏩ Updates & To Do
 
-**07/23/2025**
-- Initial code release.
-- [ ] Upload data pre-processing code.
+2025.07.23
 
+- [x] Initial code release.
+
+2025.08.01
+
+- [x] Upload data pre-processing code.
+
+To Do
+- [ ] Add hugging face demo
 
 ## 🚀 Getting Started
 
@@ -108,7 +114,7 @@ An example of using HFS-SDEdit for 2D image refinement.
 
 This runs our texture enhancement module on a single image.
 
-```python
+```sh
 python -m FLUX.flux_HFS-SDEdit
 ```
 
@@ -119,18 +125,83 @@ This script runs the complete Elevate3D pipeline on an example model. It will pe
 bash run_3d_refine_script_example.sh
 ```
 
+## Running on Your Own Data
+
+The process is broken into two stages: __Data Pre-processing__ and __Model Refinement__.
+
+We will use a sample `knight` model, generated from [TRELLIS](https://github.com/Microsoft/TRELLIS), as a running example.
+
+### __Step 1: Data Pre-processing__
+
+This step takes your input 3D model and prepares it for the refinement stage.
+
+**1. Get the Example Files**: Download the example data from [this link](https://drive.google.com/file/d/1HofQte_Zo5gpOzQqTKXGDgwg1oke-Olr/view?usp=sharing)
+
+After unzipping, you will have:
+*   `knight.glb`: The low-quality input 3D model.
+*   `knight.txt`: A text file describing the target appearance.
+
+Organize the inputs as follows:
+
+```sh
+# Create the directory structure
+mkdir -p Inputs/3D/MyData/knight
+
+# Move the downloaded files into it
+mv knight.glb Inputs/3D/MyData/knight
+mv knight.txt Inputs/3D/MyData/knight
+```
+
+__2. Execute the Pre-processing Script__
+
+Run the provided shell script, passing the path to your object's directory. This script handles model normalization and multi-view rendering.
+
+```sh
+bash run_render_script.sh
+```
+
+The script will populate your directory with new files.:
+```plaintext
+Inputs/3D/MyData/
+            └── knight/
+                ├── knight_normalized.obj
+                ├── prompt.txt
+                ├── train_0_0.png
+                └── ... (many more rendered images)
+```
+---
+
+### __Step 2: Model Refinement__
+
+Now that the data is ready, you can run the main refinement algorithm. 
+Use the following command, ensuring the `dataset` and `obj_name` arguments match the directory structure you just created.
+
+```sh
+python main_refactor.py \
+  --obj_name="knight" \
+  --conf_name="config_my" \
+  --bake_mesh \
+  --device_idx=0
+```
+The default `config_my.yaml` provides a good starting point. 
+For best results on your own data, we recommend adjusting this configuration for your own dataset.
+
+After the refinement results will be available in `Outputs/3D/MyData/knight`
+
 ## 🙏 Acknowledgements
 
 This work builds upon the fantastic research and open-source contributions from the community.
 We extend our sincere thanks to the authors of the following projects:
 
 - [FLUX](https://github.com/black-forest-labs/flux)
+- [BiNI](https://github.com/xucao-42/bilateral_normal_integration)
 - [Segment Anything (SAM)](https://github.com/facebookresearch/segment-anything)
 - [Marigold](https://github.com/prs-eth/Marigold)
 - [Marigold E2E](https://github.com/VisualComputingInstitute/diffusion-e2e-ft)
 - [PoissonRecon](https://github.com/mkazhdan/PoissonRecon)
 - [continuous-remeshing](https://github.com/Profactor/continuous-remeshing)
 - [InTeX](https://github.com/ashawkey/InTeX)
+- [TRELLIS](https://github.com/Microsoft/TRELLIS)
 
 <!-- Citation -->
 ## 📜 Citation

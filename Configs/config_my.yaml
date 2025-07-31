@@ -1,0 +1,128 @@
+input_base_dir:  "./Inputs/3D/"
+output_base_dir: "./Outputs/3D/"
+dataset: "MyData"
+obj_name: "anise"
+sam_ckpt_path: "./Checkpoints/sam/sam_vit_h_4b8939.pth"
+seed: 0
+im_res: 1024 #1024 #768
+cos_thresh: 0.5
+
+significant_thresh: 0.500
+minor_thresh: 0.100
+negligible_thresh: 0.020
+
+camera_schedule:
+  - yaw: 0.0
+    pitch: 0.0
+  - yaw: 0.0
+    pitch: 45.0
+  - yaw: 0.0
+    pitch: -45.0
+  - yaw: 90.0
+    pitch: 0.0
+  - yaw: 90.0
+    pitch: 45.0
+  - yaw: 90.0
+    pitch: -45.0
+  - yaw: 180.0
+    pitch: 0.0
+  - yaw: 180.0
+    pitch: 45.0
+  - yaw: 180.0
+    pitch: -45.0
+  - yaw: 270.0
+    pitch: 0.0
+  - yaw: 270.0
+    pitch: 45.0
+  - yaw: 270.0
+    pitch: -45.0
+
+# optional_schedule: # Auto generated.
+# test_schedule: # Auto generated.
+
+flux:
+  # Model Paths
+  base_pipeline_path: "black-forest-labs/FLUX.1-dev"
+  depth_pipeline_path: "black-forest-labs/FLUX.1-Depth-dev"
+  redux_pipeline_path: "black-forest-labs/FLUX.1-Redux-dev"
+  use_im_prompt: False
+  use_simple_prompt: False
+  use_grid: True
+  ref_sample_batch: 8
+  
+  # Pipeline Parameters
+  significant:
+    strength: 0.95 # Avoid strength max
+    guidance_scale: 10.0 # Note that official BFL docu uses high scale
+    low_freq_ratio: 0.04
+    replace_steps: 13
+    replace_limit: 850
+    stop_replace_steps: 25
+    replace_type: 'swap_im_hf'
+    steps: 30
+    gamma: 0.1
+
+  minor:
+    strength: 0.95 #0.93
+    guidance_scale: 10.0 
+    low_freq_ratio: 0.04
+    replace_steps: 13
+    replace_limit: 850
+    stop_replace_steps: 25
+    replace_type: 'swap_im_hf'
+    steps: 30
+    gamma: 0.1
+
+  negligible:
+    strength: 0.4
+    guidance_scale: 10.0
+    low_freq_ratio: 0.04
+    replace_steps: 30
+    replace_limit: 0
+    stop_replace_steps: 30
+    replace_type: 'all'
+    steps: 30
+    gamma: 0.1
+
+  # Background Colors
+  bg_color_options:
+    green: [0, 255, 0, 255]
+    gray: [127, 127, 127, 255]
+    black: [0, 0, 0, 255]
+    white: [255, 255, 255, 255]
+
+  bg_color: "white"
+
+mono:
+  checkpoint: "GonzaloMG/marigold-e2e-ft-normals"
+  denoise_steps: 1
+  ensemble_size: 1
+  half_precision: true
+  timestep_spacing: "trailing"
+  processing_res: 768
+  output_processing_res: true
+  resample_method: "bicubic"
+  color_map: "Spectral"
+  seed: 42
+  batch_size: 1
+  apple_silicon: false
+  noise: "zeros"
+  modality: "normals"
+
+projection:
+  vertex_shader_path: "./Projection/shaders/vertex_shader.glsl"
+  bake_vertex_shader_path: "./Projection/shaders/vertex_shader_uv.glsl"
+  normal_fragment_shader_path: './Projection/shaders/normal_fragment_shader.glsl'
+
+poisson:
+  bin_fp: "./PoissonRecon/Bin/Linux/PoissonRecon"
+  poisson_depth: 9
+  bini_params:
+    depth_lambda: 8e-3 
+    depth_lambda2: 1e-1
+    k: 1.
+    iters: 3000
+    tol: 1e-5
+    cgiter: 5000
+    cgtol: 1e-3
+    seen_thresh: 0.1
