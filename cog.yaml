@@ -17,6 +17,10 @@ build:
   run:
     - apt-get update -qq
     - apt-get install -qqy --no-install-recommends libjpeg-dev libpng-dev libboost-all-dev
-    - chmod +x build.sh
-    - ./build.sh
+    - echo "=== recursive listing (truncated) ==="
+    - ls -R -al | head -200
+    - echo "=== locating build.sh ==="
+    - bash -lc 'SCRIPT=$(find . -maxdepth 4 -type f -name build.sh | head -n1); \
+        if [ -z "$SCRIPT" ]; then echo "🛑 build.sh not found in build context"; ls -R . | head -200; exit 1; fi; \
+        echo "Found build.sh at: $SCRIPT"; chmod +x "$SCRIPT"; "$SCRIPT"'
 predict: "predict.py:Predictor"
