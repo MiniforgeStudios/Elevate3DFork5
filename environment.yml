@@ -1,17 +1,9 @@
 name: elevate3d
 channels:
-  - pytorch
-  - nvidia
-  - conda-forge
   - defaults
+  - conda-forge
 dependencies:
   - python=3.10
   - pip
-  - pytorch=2.5.1
-  - torchvision
-  - pytorch-cuda=12.1
-  - cmake
-  - ninja
-
   - pip:
-    - -r requirements.txt
+      - -r requirements.txt
