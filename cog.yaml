@@ -15,15 +15,16 @@ build:
     - libjpeg-dev
     - libpng-dev
   run:
-    # Install Miniconda and bootstrap the environment
     - wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
     - bash miniconda.sh -b -p /opt/conda
     - export PATH=/opt/conda/bin:$PATH
     - /opt/conda/bin/conda init bash || true
     - /opt/conda/bin/conda config --set always_yes yes --set changeps1 no
+    - /opt/conda/bin/conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main
+    - /opt/conda/bin/conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r
+    # optional: update base conda; you can skip this if it causes friction
     - /opt/conda/bin/conda update -n base -c defaults conda
     - /opt/conda/bin/conda env create -f environment.yml
-    # Fetch necessary checkpoints and build PoissonRecon
     - mkdir -p Checkpoints/sam
     - wget -nc https://dl.fbaipublicfiles.com/segment_anything/sam_vit_h_4b8939.pth -P Checkpoints/sam/
     - git clone https://github.com/mkazhdan/PoissonRecon.git || true
