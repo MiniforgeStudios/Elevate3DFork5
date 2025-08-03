@@ -14,9 +14,15 @@ build:
   run:
     - apt-get update -qq
     - apt-get install -qqy --no-install-recommends libjpeg-dev libpng-dev libboost-all-dev
-    - echo "=== Build context root listing ==="
+    - echo "=== build root listing (normal) ==="
     - ls -al .
-    - test -f requirements.txt || (echo "🛑 requirements.txt missing" && exit 1)
+    - echo "=== build root listing (escaped) ==="
+    - ls -lb .
+    - echo "=== quoted filenames ==="
+    - bash -lc 'for f in *; do printf "%q\n" "$f"; done'
+    - echo "=== grep for requirement-ish names ==="
+    - ls -al | grep -i req || true
+    - test -f requirements.txt || (echo "🛑 requirements.txt missing; above listing shows what is present" && exit 1)
     - mkdir -p Checkpoints/sam
     - wget -nc https://dl.fbaipublicfiles.com/segment_anything/sam_vit_h_4b8939.pth -P Checkpoints/sam/
     - git clone https://github.com/mkazhdan/PoissonRecon.git || true
