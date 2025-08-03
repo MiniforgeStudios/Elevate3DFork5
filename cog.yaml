@@ -15,25 +15,8 @@ build:
     - libpng-dev
     - libboost-all-dev
   run:
-    # --- Diagnostics: show where we are and what files we got ---
-    - echo "=== PWD ==="; pwd
-    - echo "=== ROOT (normal) ==="; ls -al .
-    - echo "=== ROOT (escaped) ==="; ls -lb .
-    - echo "=== Find manifests (maxdepth 3) ==="; find . -maxdepth 3 -type f \( -name "cog.yaml" -o -name "requirements.txt" -o -name "environment.yml" \) -print
-
-    # --- Locate requirements.txt or environment.yml, prefer environment.yml if present ---
-    - bash -lc 'REQ=$(find . -maxdepth 3 -type f -name requirements.txt | head -n1); ENVY=$(find . -maxdepth 3 -type f -name environment.yml | head -n1); echo "REQ=$REQ"; echo "ENVY=$ENVY"; if [ -z "$REQ" ] && [ -z "$ENVY" ]; then echo "🛑 Neither requirements.txt nor environment.yml found within 3 levels"; exit 1; fi; echo "✅ Manifests detected."'
-
-    # --- If you want to keep it pip-only for now (simpler / fewer CI surprises) ---
-    - python -m pip install --upgrade pip
-    - bash -lc 'REQ=$(find . -maxdepth 3 -type f -name requirements.txt | head -n1); pip install -r "$REQ" cog'
-
-    # --- Assets PoissonRecon depends on ---
-    - mkdir -p Checkpoints/sam
-    - wget -nc https://dl.fbaipublicfiles.com/segment_anything/sam_vit_h_4b8939.pth -P Checkpoints/sam/
-
-    # --- Build PoissonRecon after headers are installed ---
-    - git clone https://github.com/mkazhdan/PoissonRecon.git || true
-    - make -C PoissonRecon
-
+    - apt-get update -qq
+    - apt-get install -qqy --no-install-recommends libjpeg-dev libpng-dev libboost-all-dev
+    - chmod +x build.sh
+    - ./build.sh
 predict: "predict.py:Predictor"
