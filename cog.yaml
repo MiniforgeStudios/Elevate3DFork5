@@ -1,4 +1,3 @@
-# Cog configuration for deploying Elevate3D to Replicate
 build:
   gpu: true
   cuda: "12.1"
@@ -11,15 +10,12 @@ build:
     - unzip
     - libgl1
     - libglib2.0-0
-  python_packages:
-    - -r requirements.txt
-
   run:
-    # Build PoissonRecon (required by geometry refinement step)
     - git clone https://github.com/mkazhdan/PoissonRecon.git || true
     - make -C PoissonRecon
-    # Create checkpoints dir and download SAM checkpoint (others may auto-download)
     - mkdir -p Checkpoints/sam
     - wget -nc https://dl.fbaipublicfiles.com/segment_anything/sam_vit_h_4b8939.pth -P Checkpoints/sam/
-
+    - python -m pip install --upgrade pip
+    - python -m pip install cog
 predict: "predict.py:Predictor"
+
