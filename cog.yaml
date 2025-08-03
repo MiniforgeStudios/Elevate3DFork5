@@ -4,19 +4,19 @@ build:
   python_version: "3.10"
   system_packages:
     - wget
-    - bzip2
     - ca-certificates
-    - cmake
     - git
     - unzip
+    - cmake
+    - build-essential
     - libgl1
     - libglib2.0-0
   run:
     - apt-get update -qq
-    - apt-get install -qqy libjpeg-dev libpng-dev libboost-all-dev build-essential
-    - echo "== build root listing before anything =="
+    - apt-get install -qqy --no-install-recommends libjpeg-dev libpng-dev libboost-all-dev
+    - echo "=== Build context root listing ==="
     - ls -al .
-    - test -f requirements.txt || (echo "🛑 requirements.txt missing in build context" && exit 1)
+    - test -f requirements.txt || (echo "🛑 requirements.txt missing" && exit 1)
     - mkdir -p Checkpoints/sam
     - wget -nc https://dl.fbaipublicfiles.com/segment_anything/sam_vit_h_4b8939.pth -P Checkpoints/sam/
     - git clone https://github.com/mkazhdan/PoissonRecon.git || true
