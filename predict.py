@@ -73,11 +73,12 @@ class Predictor(BasePredictor):
 
         # Build base command
         cmd = [
-            "python", "main_refactor.py",
-            f"--obj_name={obj_name}",
-            f"--conf_name={conf_name}",
-            f"--device_idx={device_idx}",
-        ]
+    "conda", "run", "-n", "elevate3d", "python", "main_refactor.py",
+    f"--obj_name={obj_name}",
+    f"--conf_name={conf_name}",
+    f"--device_idx={device_idx}",
+       ]
+
 
         if bake_mesh:
             cmd.append("--bake_mesh")
