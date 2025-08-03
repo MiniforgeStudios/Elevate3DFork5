@@ -14,12 +14,25 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Show working tree (debug)
+      - name: Locate cog.yaml
+        id: loc
         run: |
-          echo "Top-level files:"
-          ls -al .
-          echo "Sample tree:"
-          ls -R . | head -100
+          set -euo pipefail
+          echo "Repo root: $(pwd)"
+          # Find the first path that contains a file named exactly cog.yaml (at depth ≤ 3)
+          COG_DIR=$(find . -maxdepth 3 -type f -name cog.yaml -printf '%h\n' | head -n1)
+          if [ -z "$COG_DIR" ]; then
+            echo "cog.yaml not found anywhere under repo root"; exit 1
+          fi
+          echo "COG_DIR=$COG_DIR" | tee -a "$GITHUB_ENV"
+          echo "Found cog.yaml in: $COG_DIR"
+
+      - name: Show contents of Cog dir
+        run: |
+          cd "$COG_DIR"
+          pwd
+          ls -al
+          echo "requirements.txt present?"; test -f requirements.txt && echo "yes" || echo "no"
 
       - name: Setup Cog
         uses: replicate/setup-cog@v2
@@ -27,7 +40,7 @@ jobs:
           token: ${{ secrets.REPLICATE_CLI_AUTH_TOKEN }}
 
       - name: Push to Replicate
+        working-directory: ${{ env.COG_DIR }}
         run: |
-          echo "Contents before cog push:"
-          ls -al
+          ls -al  # final sanity check
           cog push r8.im/miniforgestudio/elevate3d
