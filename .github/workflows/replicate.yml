@@ -9,8 +9,17 @@ jobs:
   push-model:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Show working tree (debug)
+        run: |
+          echo "Top-level files:"
+          ls -al .
+          echo "Sample tree:"
+          ls -R . | head -100
 
       - name: Setup Cog
         uses: replicate/setup-cog@v2
@@ -19,4 +28,6 @@ jobs:
 
       - name: Push to Replicate
         run: |
+          echo "Contents before cog push:"
+          ls -al
           cog push r8.im/miniforgestudio/elevate3d
