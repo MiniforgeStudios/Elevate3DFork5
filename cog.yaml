@@ -18,11 +18,27 @@ build:
     - wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
     - bash miniconda.sh -b -p /opt/conda
     - export PATH=/opt/conda/bin:$PATH
-    - /opt/conda/bin/conda init bash || true
-    - /opt/conda/bin/conda config --set always_yes yes --set changeps1 no
-    - /opt/conda/bin/conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main
-    - /opt/conda/bin/conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r
-    - /opt/conda/bin/conda env create -f environment.yml
+    - |
+      # Initialize conda and accept TOS
+      /opt/conda/bin/conda init bash || true
+      /opt/conda/bin/conda config --set always_yes yes --set changeps1 no
+      /opt/conda/bin/conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main || true
+      /opt/conda/bin/conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r || true
+
+      echo "---- build context root listing ----"
+      ls -al .
+      echo "---- contents of environment.yml (if any) ----"
+      if [ -f environment.yml ]; then
+        cat environment.yml
+        /opt/conda/bin/conda env create -f environment.yml
+        echo "Installing cog into conda env"
+        /opt/conda/bin/conda run -n elevate3d pip install --upgrade pip cog
+      else
+        echo "environment.yml not found; falling back to pip install"
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install cog
+      fi
     - mkdir -p Checkpoints/sam
     - wget -nc https://dl.fbaipublicfiles.com/segment_anything/sam_vit_h_4b8939.pth -P Checkpoints/sam/
     - git clone https://github.com/mkazhdan/PoissonRecon.git || true
