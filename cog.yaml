@@ -22,8 +22,6 @@ build:
     - /opt/conda/bin/conda config --set always_yes yes --set changeps1 no
     - /opt/conda/bin/conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main
     - /opt/conda/bin/conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r
-    # optional: update base conda; you can skip this if it causes friction
-    - /opt/conda/bin/conda update -n base -c defaults conda
     - /opt/conda/bin/conda env create -f environment.yml
     - mkdir -p Checkpoints/sam
     - wget -nc https://dl.fbaipublicfiles.com/segment_anything/sam_vit_h_4b8939.pth -P Checkpoints/sam/
