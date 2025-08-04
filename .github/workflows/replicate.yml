@@ -26,7 +26,7 @@ jobs:
           # Flatten into a clean workspace to avoid any weird relative path issues
           rm -rf work
           mkdir work
-          cp -R "$COGDIR/." work/
+          rsync -a --exclude='work' "$COGDIR"/ work/
           echo "Contents of work dir:"
           ls -al work
           # Sanity checks
