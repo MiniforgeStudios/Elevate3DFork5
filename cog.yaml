@@ -1,9 +1,9 @@
 build:
-  # Enable GPU support. Cog will automatically pull a CUDA 12.1 base image.
+  # Enable GPU support and specify CUDA 12.1 to match torch==2.5.1 wheels.
   gpu: true
   python_version: "3.10"
   cuda: "12.1"
-  # Install all Python dependencies from requirements.txt
+  # Install Python dependencies from requirements.txt
   python_requirements: requirements.txt
   # APT packages needed for compiling native extensions and PoissonRecon
   system_packages:
@@ -16,10 +16,11 @@ build:
     - "libjpeg-dev"
     - "libpng-dev"
     - "libboost-all-dev"
-  # Clone and build PoissonRecon, then copy the binary to /usr/local/bin
+  # Build PoissonRecon and then install tinycudann (after torch is installed)
   run:
     - git clone --depth 1 https://github.com/mkazhdan/PoissonRecon.git
     - make -C PoissonRecon
     - cp PoissonRecon/Bin/Linux/PoissonRecon /usr/local/bin/PoissonRecon
+    - pip install git+https://github.com/NVlabs/tiny-cuda-nn/@c91138bcd4c6877c8d5e60e483c0581aafc70cce#subdirectory=bindings/torch
 
 predict: "predict.py:Predictor"
