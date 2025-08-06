@@ -1,7 +1,8 @@
 build:
-  # Enable GPU support. Cog will automatically choose a compatible CUDA version.
+  # Enable GPU support. Cog will automatically pull a CUDA 12.1 base image.
   gpu: true
   python_version: "3.10"
+  cuda: "12.1"
   # Install all Python dependencies from requirements.txt
   python_requirements: requirements.txt
   # APT packages needed for compiling native extensions and PoissonRecon
