@@ -189,9 +189,9 @@ termcolor==2.4.0
 threadpoolctl==3.5.0
 tifffile==2024.8.30
 timm==1.0.9
-tinycudann @ git+https://github.com/NVlabs/tiny-cuda-nn/@c91138bcd4c6877c8d5e60e483c0581aafc70cce#subdirectory=bindings/torch
 tokenizers==0.20.1
 torchao==0.12.0
+# tinycudann is installed separately in cog.yaml to ensure torch is available at build time.
 torch-scatter
 tomli==2.0.2
 tqdm==4.66.5
