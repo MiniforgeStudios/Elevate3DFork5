@@ -1,45 +1,24 @@
 build:
+  # Enable GPU support. Cog will automatically choose a compatible CUDA version.
   gpu: true
   python_version: "3.10"
-  # Specify the CUDA version explicitly so Cog knows which CUDA toolkit
-  # to use. This fixes the error about unknown CUDA version for torch
-  # in the GitHub Actions build logs.
-  cuda: "12.1"
-  # Install PyTorch early so that pip-installed packages depending on torch (e.g., tinycudann)
-  # can build their wheels successfully during the build step. Without an explicit torch
-  # installation, Cog's base GPU image may not provide it, leading to build failures.
-  python_packages:
-    - "torch==2.3.1"
-    - "torchvision==0.18.1"
-    - "torchaudio==2.3.1"
+  # Install all Python dependencies from requirements.txt
+  python_requirements: requirements.txt
+  # APT packages needed for compiling native extensions and PoissonRecon
   system_packages:
     - "make"
     - "build-essential"
-    - "libssl-dev"
-    - "zlib1g-dev"
-    - "libbz2-dev"
-    - "libreadline-dev"
-    - "libsqlite3-dev"
-    - "wget"
-    - "curl"
-    - "llvm"
-    - "libncurses5-dev"
-    - "libncursesw5-dev"
-    - "xz-utils"
-    - "tk-dev"
-    - "libffi-dev"
-    - "liblzma-dev"
     - "git"
-    - "ca-certificates"
-    - "unzip"
     - "cmake"
     - "libgl1"
     - "libglib2.0-0"
     - "libjpeg-dev"
     - "libpng-dev"
     - "libboost-all-dev"
+  # Clone and build PoissonRecon, then copy the binary to /usr/local/bin
   run:
-    - "chmod +x build.sh"
-    - "./build.sh"
+    - git clone --depth 1 https://github.com/mkazhdan/PoissonRecon.git
+    - make -C PoissonRecon
+    - cp PoissonRecon/Bin/Linux/PoissonRecon /usr/local/bin/PoissonRecon
 
 predict: "predict.py:Predictor"
