@@ -5,9 +5,6 @@ from pathlib import Path
 from typing import Optional
 from cog import BasePredictor, Input, Path as CogPath
 
-# This predictor wraps the Elevate3D pipeline's main script.
-# It expects to live at the root of the Elevate3D repo (next to main_refactor.py).
-
 class Predictor(BasePredictor):
     def setup(self):
         # Validate that required files are present
@@ -18,8 +15,6 @@ class Predictor(BasePredictor):
         # Ensure PoissonRecon binary exists
         pr_bin = Path("PoissonRecon/Bin/Linux/PoissonRecon")
         if not pr_bin.exists():
-            # Not fatal during setup—the build step should have compiled it,
-            # but we'll warn so users know why geometry steps might fail.
             print("Warning: PoissonRecon executable not found at PoissonRecon/Bin/Linux/PoissonRecon. "
                   "Geometry refinement might fail unless built in the container build step.")
 
@@ -35,14 +30,6 @@ class Predictor(BasePredictor):
         mode: str = Input(choices=["full", "texture_only", "geometry_only"], default="full", description="Run full pipeline or a subset."),
         return_zip: bool = Input(default=True, description="Return a ZIP of the Outputs folder."),
     ) -> CogPath:
-        """Run Elevate3D pipeline on the uploaded model.
-
-        This wraps the 2-stage flow from the README:
-          1) Preprocess (normalize + render multi-views)
-          2) Refinement via main_refactor.py
-
-        The exact scripts may evolve upstream; adjust here accordingly.
-        """
         model_path = Path(model_file)
         model_ext = model_path.suffix.lower()
         if model_ext not in [".obj", ".glb", ".ply"]:
@@ -51,39 +38,32 @@ class Predictor(BasePredictor):
         # Prepare inputs directory structure
         in_root = Path("Inputs/3D") / dataset / obj_name
         in_root.mkdir(parents=True, exist_ok=True)
-        # Copy the uploaded file to expected input location
         target_model = in_root / f"{obj_name}{model_ext}"
         shutil.copyfile(model_path, target_model)
 
-        # Write prompt if provided
         if prompt_text:
             (in_root / "prompt.txt").write_text(prompt_text)
 
-        # Run preprocessing (if the project provides a helper script; otherwise, skip)
-        # Fallback: call preprocess.py directly if available.
+        # Preprocess if available
         preprocess_script = Path("run_preprocess_script.sh")
         if preprocess_script.exists():
             self._run_cmd(["bash", str(preprocess_script)], cwd=".")
         else:
-            # Try a minimal preprocessing by calling preprocess.py if it exists.
             if Path("preprocess.py").exists():
                 self._run_cmd(["python", "preprocess.py", "--obj_name", obj_name, "--dataset", dataset], cwd=".")
             else:
                 print("Preprocess helpers not found. Proceeding directly to refinement...")
 
-        # Build base command
+        # Build base command — call Python directly rather than using Conda
         cmd = [
-    "conda", "run", "-n", "elevate3d", "python", "main_refactor.py",
-    f"--obj_name={obj_name}",
-    f"--conf_name={conf_name}",
-    f"--device_idx={device_idx}",
-       ]
-
-
+            "python", "main_refactor.py",
+            f"--obj_name={obj_name}",
+            f"--conf_name={conf_name}",
+            f"--device_idx={device_idx}",
+        ]
         if bake_mesh:
             cmd.append("--bake_mesh")
 
-        # Mode toggles (assumes upstream supports these flags; otherwise ignore)
         if mode == "texture_only":
             cmd.append("--texture_only")
         elif mode == "geometry_only":
@@ -94,7 +74,6 @@ class Predictor(BasePredictor):
         # Collect outputs
         out_dir = Path("Outputs/3D") / dataset / obj_name
         if not out_dir.exists():
-            # Try alternate default from README (MyData)
             out_dir = Path("Outputs/3D") / "MyData" / obj_name
         if not out_dir.exists():
             raise RuntimeError(f"Expected output dir not found: {out_dir}")
@@ -104,11 +83,9 @@ class Predictor(BasePredictor):
             self._zipdir(out_dir, zip_path)
             return CogPath(str(zip_path))
 
-        # If not zipping, try to return a baked mesh if it exists, otherwise the folder
         baked = next(out_dir.glob("**/*.obj"), None) or next(out_dir.glob("**/*.glb"), None)
         if baked:
             return CogPath(str(baked))
-        # Last resort: zip folder anyway
         zip_path = Path(f"{obj_name}_results.zip")
         self._zipdir(out_dir, zip_path)
         return CogPath(str(zip_path))
