@@ -12,11 +12,38 @@ class Predictor(BasePredictor):
         for f in required:
             if not Path(f).exists():
                 raise RuntimeError(f"Required file missing: {f}. Make sure this Predictor lives at the root of Elevate3D.")
-        # Ensure PoissonRecon binary exists
+
+        # Ensure PoissonRecon binary exists. If missing, copy it from PATH (built during container build).
         pr_bin = Path("PoissonRecon/Bin/Linux/PoissonRecon")
         if not pr_bin.exists():
-            print("Warning: PoissonRecon executable not found at PoissonRecon/Bin/Linux/PoissonRecon. "
-                  "Geometry refinement might fail unless built in the container build step.")
+            alt = shutil.which("PoissonRecon")
+            if alt:
+                dest_dir = pr_bin.parent
+                dest_dir.mkdir(parents=True, exist_ok=True)
+                shutil.copyfile(alt, pr_bin)
+                os.chmod(pr_bin, 0o755)
+                print(f"Copied PoissonRecon binary from {alt} to {pr_bin}.")
+            else:
+                print(
+                    "Warning: PoissonRecon executable not found in repository or on PATH. "
+                    "Geometry refinement might fail unless built in the container build step."
+                )
+
+        # Download SAM checkpoint if missing
+        sam_dir = Path("Checkpoints/sam")
+        sam_checkpoint = sam_dir / "sam_vit_h_4b8939.pth"
+        if not sam_checkpoint.exists():
+            sam_dir.mkdir(parents=True, exist_ok=True)
+            try:
+                from urllib.request import urlretrieve
+                print("Downloading SAM checkpoint...")
+                urlretrieve(
+                    "https://dl.fbaipublicfiles.com/segment_anything/sam_vit_h_4b8939.pth",
+                    str(sam_checkpoint),
+                )
+                print("Downloaded SAM checkpoint.")
+            except Exception as e:
+                print(f"Warning: failed to download SAM checkpoint: {e}")
 
     def predict(
         self,
@@ -30,6 +57,7 @@ class Predictor(BasePredictor):
         mode: str = Input(choices=["full", "texture_only", "geometry_only"], default="full", description="Run full pipeline or a subset."),
         return_zip: bool = Input(default=True, description="Return a ZIP of the Outputs folder."),
     ) -> CogPath:
+        # Validate input model format
         model_path = Path(model_file)
         model_ext = model_path.suffix.lower()
         if model_ext not in [".obj", ".glb", ".ply"]:
@@ -41,10 +69,11 @@ class Predictor(BasePredictor):
         target_model = in_root / f"{obj_name}{model_ext}"
         shutil.copyfile(model_path, target_model)
 
+        # Save prompt text if provided
         if prompt_text:
             (in_root / "prompt.txt").write_text(prompt_text)
 
-        # Preprocess if available
+        # Run preprocessing (if available)
         preprocess_script = Path("run_preprocess_script.sh")
         if preprocess_script.exists():
             self._run_cmd(["bash", str(preprocess_script)], cwd=".")
@@ -54,7 +83,7 @@ class Predictor(BasePredictor):
             else:
                 print("Preprocess helpers not found. Proceeding directly to refinement...")
 
-        # Build base command — call Python directly rather than using Conda
+        # Build command for refinement step
         cmd = [
             "python", "main_refactor.py",
             f"--obj_name={obj_name}",
@@ -63,7 +92,6 @@ class Predictor(BasePredictor):
         ]
         if bake_mesh:
             cmd.append("--bake_mesh")
-
         if mode == "texture_only":
             cmd.append("--texture_only")
         elif mode == "geometry_only":
