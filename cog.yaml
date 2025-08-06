@@ -1,11 +1,9 @@
 build:
-  # Enable GPU support and specify CUDA 12.1 to match torch==2.5.1 wheels.
   gpu: true
   python_version: "3.10"
+  # Pin CUDA to match the PyTorch wheels.
   cuda: "12.1"
-  # Install Python dependencies from requirements.txt
-  python_requirements: requirements.txt
-  # APT packages needed for compiling native extensions and PoissonRecon
+  # System packages needed for building PoissonRecon and Python extensions
   system_packages:
     - "make"
     - "build-essential"
@@ -16,11 +14,19 @@ build:
     - "libjpeg-dev"
     - "libpng-dev"
     - "libboost-all-dev"
-  # Build PoissonRecon and then install tinycudann (after torch is installed)
+  # Build steps:
+  # 1. Install Python dependencies without caching, to save disk space.
+  # 2. Remove any pip cache that may have been created.
+  # 3. Build PoissonRecon.
+  # 4. Install tinycudann after torch is present.
   run:
+    - pip install --upgrade pip
+    - pip install --no-cache-dir -r requirements.txt
+    - pip cache purge
     - git clone --depth 1 https://github.com/mkazhdan/PoissonRecon.git
     - make -C PoissonRecon
     - cp PoissonRecon/Bin/Linux/PoissonRecon /usr/local/bin/PoissonRecon
-    - pip install git+https://github.com/NVlabs/tiny-cuda-nn/@c91138bcd4c6877c8d5e60e483c0581aafc70cce#subdirectory=bindings/torch
+    - pip install --no-cache-dir git+https://github.com/NVlabs/tiny-cuda-nn/@c91138bcd4c6877c8d5e60e483c0581aafc70cce#subdirectory=bindings/torch
+    - pip cache purge
 
 predict: "predict.py:Predictor"
