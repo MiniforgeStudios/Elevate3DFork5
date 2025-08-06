@@ -1,8 +1,13 @@
 build:
   gpu: true
   python_version: "3.10"
-  # Install PyTorch early so that packages like tinycudann can build.
-  # Cog’s base GPU image doesn’t include Torch by default.
+  # Specify the CUDA version explicitly so Cog knows which CUDA toolkit
+  # to use. This fixes the error about unknown CUDA version for torch
+  # in the GitHub Actions build logs.
+  cuda: "12.1"
+  # Install PyTorch early so that pip-installed packages depending on torch (e.g., tinycudann)
+  # can build their wheels successfully during the build step. Without an explicit torch
+  # installation, Cog's base GPU image may not provide it, leading to build failures.
   python_packages:
     - "torch==2.3.1"
     - "torchvision==0.18.1"
